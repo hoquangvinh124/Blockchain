@@ -1,0 +1,12 @@
+node_modules
+dist
+.env
+.env.local
+.git
+.github
+.vscode
+*.log
+README.md
+Dockerfile
+.dockerignore
+pnpm-debug.log

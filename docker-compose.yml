@@ -1,0 +1,36 @@
+services:
+  hardhat:
+    build:
+      context: ./contracts
+      dockerfile: Dockerfile
+    ports:
+      - "8545:8545"
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q 'rpc' <<< \"$$(timeout 1 bash -c 'cat < /dev/tcp/localhost/8545')\" || exit 0"] # Simple check if port is open
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  deployer:
+    build:
+      context: ./contracts
+      dockerfile: Dockerfile
+    command: pnpm exec hardhat run scripts/deploy.ts --network localhost
+    environment:
+      - FRONTEND_ENV_PATH=/frontend/.env
+    volumes:
+      - ./frontend:/frontend
+    depends_on:
+      hardhat:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      deployer:
+        condition: service_completed_successfully
+    restart: unless-stopped

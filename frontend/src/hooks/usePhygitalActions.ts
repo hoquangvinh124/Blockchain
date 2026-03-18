@@ -56,6 +56,7 @@ export function usePhygitalActions() {
       functionName: "buyItem",
       args: [listingId],
       value: price,
+      gas: 500000n,
     });
   };
 
@@ -99,6 +100,16 @@ export function usePhygitalActions() {
     });
   };
 
+  const confirmReceived = async (listingId: bigint) => {
+    ensureReady();
+    return writeContractAsync({
+      address: contracts.phygitalEscrow.address,
+      abi: contracts.phygitalEscrow.abi,
+      functionName: "confirmReceived",
+      args: [listingId],
+    });
+  };
+
   const expireShipping = async (listingId: bigint) => {
     ensureReady();
     return writeContractAsync({
@@ -133,6 +144,7 @@ export function usePhygitalActions() {
       functionName: "raiseDispute",
       args: [listingId, resolveEvidenceHash(evidenceHash, evidenceURI), evidenceURI],
       value: disputeFee,
+      gas: 500000n,
     });
   };
 
@@ -173,6 +185,7 @@ export function usePhygitalActions() {
     redeemItem,
     confirmShipped,
     settle,
+    confirmReceived,
     expireShipping,
     expireRedeem,
     raiseDispute,

@@ -628,7 +628,7 @@ export default function PhygitalDetailPage() {
                         <Button
                           className="w-full"
                           disabled={actions.isPending}
-                          onClick={() => run("Confirm Received", () => actions.settle(listing.id))}
+                          onClick={() => run("Confirm Received", () => actions.confirmReceived(listing.id))}
                         >
                           <CheckCircle2 className="mr-1.5 size-3.5" /> I Have Received My Item
                         </Button>

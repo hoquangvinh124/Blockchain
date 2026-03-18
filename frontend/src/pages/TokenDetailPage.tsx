@@ -831,7 +831,7 @@ export default function TokenDetailPage() {
                           <Button
                             className="w-full"
                             disabled={phygitalActions.isPending}
-                            onClick={() => run("Confirm Received", () => phygitalActions.settle(listing.id))}
+                            onClick={() => run("Confirm Received", () => phygitalActions.confirmReceived(listing.id))}
                           >
                             <CheckCircle2 className="mr-1.5 size-3.5" /> I Have Received My Item
                           </Button>

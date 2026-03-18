@@ -369,6 +369,24 @@ contract PhygitalEscrow is
         emit ListingSettled(listingId, payout);
     }
 
+    // Buyer chu dong xac nhan da nhan hang — giai phong tien cho seller ngay, khong can doi deadline.
+    function confirmReceived(uint256 listingId)
+        external
+        nonReentrant
+        inStatus(listingId, ListingStatus.SHIPPED)
+    {
+        Listing storage listing = listings[listingId];
+        if (msg.sender != listing.redeemer) revert NotParticipant(listingId);
+
+        listing.status = ListingStatus.COMPLETED;
+
+        collection.burnToken(listing.tokenId);
+
+        uint256 payout = _releaseFundsToSeller(listing);
+
+        emit ListingSettled(listingId, payout);
+    }
+
     // Seller khong ship trong shippingDeadline: buyer refund + seller mat collateral.
     function expireShipping(uint256 listingId)
         external

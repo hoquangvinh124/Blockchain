@@ -8,11 +8,11 @@ const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
 export const contracts = {
   marketCollection: {
     address: (import.meta.env.VITE_MARKET_COLLECTION_ADDRESS || ZERO_ADDR) as `0x${string}`,
-    abi: MarketCollectionABI.abi,
+    abi: MarketCollectionABI,
   },
   phygitalEscrow: {
     address: (import.meta.env.VITE_PHYGITAL_ESCROW_ADDRESS || ZERO_ADDR) as `0x${string}`,
-    abi: PhygitalEscrowABI.abi,
+    abi: PhygitalEscrowABI,
   },
   juryDao: {
     address: (import.meta.env.VITE_JURY_DAO_ADDRESS || ZERO_ADDR) as `0x${string}`,
@@ -20,7 +20,7 @@ export const contracts = {
   },
   trustToken: {
     address: (import.meta.env.VITE_TRUST_TOKEN_ADDRESS || ZERO_ADDR) as `0x${string}`,
-    abi: TrustTokenABI.abi,
+    abi: TrustTokenABI,
   },
 } as const;
 

@@ -186,6 +186,17 @@
 
 **Effect:** Toàn bộ frontend có thể build thành công (TypeScript + Vite). Dự án có đầy đủ 3 trang chính: tạo job, chi tiết job với action buttons theo trạng thái on-chain, và dashboard liệt kê job theo vai trò. Wagmi được cập nhật lên 2.19.5 để hợp lệ với RainbowKit 2.2.10.
 
+## [2026-03-18] Đề xuất outline báo cáo 10 slide cho TrustMarket
+
+**Task:** Người dùng yêu cầu quét codebase và đề xuất cách trình bày báo cáo trong đúng 10 slide, với trọng tâm nghiêng mạnh về kinh tế và mô hình vận hành.
+
+**Changes:**
+- `summary.md` — bổ sung ghi chú tổng hợp từ việc rà soát contracts, frontend và tài liệu dự án để làm nền cho outline báo cáo 10 slide, nhấn mạnh fee, collateral, dispute economics, $TRUST, và luồng doanh thu/rủi ro.
+
+**Scope:** `contracts/contracts/`, `frontend/src/`, `TRUSTMARKET_V2_REPORT.md`, `compact.md`, `summary.md`
+
+**Effect:** Có sẵn một khung nội dung báo cáo ngắn gọn, bám sát codebase, ưu tiên câu chuyện kinh tế của marketplace thay vì sa đà vào kỹ thuật triển khai.
+
 ---
 
 ## [2026-03-11] Redesign toàn bộ frontend theo phong cách "Cryptographic Noir"
@@ -246,6 +257,17 @@
 **Scope:** Toàn bộ `contracts/contracts/` (4 contracts + 4 interfaces + 1 library) và `contracts/hardhat.config.ts`
 
 **Effect:** Tất cả 46 Solidity files compile sạch với `evm target: cancun`, 0 errors, 0 warnings. Root causes được phát hiện qua MCP server canonical patterns: (1) OZ v5 dùng `Initializable`/`UUPSUpgradeable` từ non-upgradeable package, (2) `__UUPSUpgradeable_init()` không tồn tại trong OZ v5, (3) `mcopy` opcode yêu cầu EVM Cancun.
+
+## [2026-03-18] Map luồng chính của TrustMarket
+
+**Task:** Quét toàn bộ codebase và trích ra luồng chính của dự án, từ lúc app khởi động đến các bước browse, tạo NFT, mua bán phygital, xử lý dispute, và jury vote.
+
+**Changes:**
+- `summary.md` — thêm một bản ghi tổng hợp luồng hệ thống để làm mốc tham chiếu cho các lần giải thích hoặc báo cáo sau này.
+
+**Scope:** `frontend/src/`, `contracts/contracts/`, `contracts/scripts/deploy.ts`, `summary.md`
+
+**Effect:** Có sẵn một bản đồ khái quát end-to-end của TrustMarket, giúp đọc nhanh vai trò của từng lớp: bootstrap UI, provider/wallet, data hooks, page actions, escrow lifecycle, jury resolution, và script deploy/wiring.
 
 ---
 

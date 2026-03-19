@@ -56,7 +56,6 @@ export function usePhygitalActions() {
       functionName: "buyItem",
       args: [listingId],
       value: price,
-      gas: 500000n,
     });
   };
 
@@ -144,7 +143,6 @@ export function usePhygitalActions() {
       functionName: "raiseDispute",
       args: [listingId, resolveEvidenceHash(evidenceHash, evidenceURI), evidenceURI],
       value: disputeFee,
-      gas: 500000n,
     });
   };
 

@@ -608,6 +608,45 @@ export default function PhygitalDetailPage() {
                         <Clock className="mr-1.5 size-3.5" /> Expire Shipping (refund buyer)
                       </Button>
                     )}
+                    {/* Buyer có thể raise dispute ngay khi REDEEMED nếu seller không ship */}
+                    {isBuyer && listing.shippingDeadline > 0n && now <= listing.shippingDeadline && (
+                      <div className="space-y-3 rounded-xl border border-rose-500/20 bg-rose-950/10 p-4">
+                        <h4 className="flex items-center gap-1.5 text-xs font-bold text-rose-400">
+                          <ShieldAlert className="size-3.5" /> Raise Dispute (Seller Not Shipped)
+                        </h4>
+                        <p className="text-xs text-zinc-400">Seller has not shipped yet. You can open a dispute now.</p>
+                        <div className="field-group">
+                          <label className="field-label">Attach Evidence File</label>
+                          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-zinc-700 bg-zinc-900 p-4 text-xs text-zinc-400 hover:border-zinc-500 hover:text-white transition-colors">
+                            <Upload className="size-4 shrink-0" />
+                            <span>{evidenceUploading ? "Uploading…" : evidenceURI ? "File uploaded — click to replace" : "Choose file to upload"}</span>
+                            <input
+                              type="file"
+                              accept="image/*,video/*,.pdf,.txt,.doc,.docx"
+                              className="sr-only"
+                              disabled={evidenceUploading}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) void handleEvidenceUpload(file);
+                              }}
+                            />
+                          </label>
+                          {evidenceUploading && (
+                            <p className="mt-1 flex items-center gap-1.5 text-xs text-zinc-500">
+                              <Loader2 className="size-3 animate-spin" /> Uploading to IPFS…
+                            </p>
+                          )}
+                        </div>
+                        <Button
+                          variant="destructive"
+                          className="w-full"
+                          disabled={actions.isPending || !evidenceURI.trim() || evidenceUploading}
+                          onClick={() => run("Raise Dispute", () => actions.raiseDispute(listing.id, evidenceHash, evidenceURI, listing.price))}
+                        >
+                          {evidenceUploading ? <Loader2 className="mr-1.5 size-3.5 animate-spin" /> : <ShieldAlert className="mr-1.5 size-3.5" />} Submit Dispute (requires fee)
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
 

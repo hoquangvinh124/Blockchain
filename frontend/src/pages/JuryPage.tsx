@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useAccount, useReadContract, useReadContracts, useSignMessage } from "wagmi";
+import { useAccount, usePublicClient, useReadContract, useReadContracts, useSignMessage } from "wagmi";
 import { toast } from "sonner";
 import {
   Users, AlertTriangle, Shield, CheckCircle2, ChevronRight,
@@ -63,16 +63,29 @@ export default function JuryPage() {
 
   const disputed = useMemo(() => listings.filter((l) => l.status === STATUS.DISPUTED), [listings]);
 
-  const { data: casesData } = useReadContracts({
+  // Resolve listingId -> caseId for all disputed listings (for list view metrics)
+  const { data: listCaseIdsData } = useReadContracts({
     contracts: disputed.map((item) => ({
       address: contracts.juryDao.address,
       abi: contracts.juryDao.abi,
-      functionName: "cases",
+      functionName: "listingCaseId",
       args: [item.id],
     })),
     query: { enabled: contractReady && disputed.length > 0 },
   });
+  const listResolvedCaseIds = disputed.map((_, i) => listCaseIdsData?.[i]?.result as bigint | undefined);
 
+  const { data: casesData } = useReadContracts({
+    contracts: disputed.map((_, i) => ({
+      address: contracts.juryDao.address,
+      abi: contracts.juryDao.abi,
+      functionName: "cases",
+      args: [listResolvedCaseIds[i] ?? 0n],
+    })),
+    query: { enabled: contractReady && listResolvedCaseIds.some((id) => id !== undefined) },
+  });
+
+  const publicClient = usePublicClient();
   const [selectedCaseId, setSelectedCaseId] = useState("");
   const [voteForBuyer, setVoteForBuyer] = useState(true);
   const [reason, setReason] = useState("");
@@ -83,9 +96,42 @@ export default function JuryPage() {
     [disputed, selectedCaseId],
   );
   const selectedListing = selectedIdx >= 0 ? disputed[selectedIdx] : undefined;
-  const selectedCaseData = selectedIdx >= 0
-    ? (casesData?.[selectedIdx]?.result as Record<string, unknown> | undefined)
-    : undefined;
+
+  // Resolved case data fetched via publicClient (avoids chained-hook timing issues)
+  const [resolvedSelectedCaseId, setResolvedSelectedCaseId] = useState("");
+  const [selectedCaseData, setSelectedCaseData] = useState<Record<string, unknown> | undefined>(undefined);
+
+  useEffect(() => {
+    setSelectedCaseData(undefined);
+    setResolvedSelectedCaseId("");
+    if (!selectedListing || !publicClient || !contractReady) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const caseId = await publicClient.readContract({
+          address: contracts.juryDao.address,
+          abi: contracts.juryDao.abi,
+          functionName: "listingCaseId",
+          args: [selectedListing.id],
+        });
+        if (cancelled) return;
+        const caseData = await publicClient.readContract({
+          address: contracts.juryDao.address,
+          abi: contracts.juryDao.abi,
+          functionName: "getCase",
+          args: [caseId as bigint],
+        });
+        if (cancelled) return;
+        setResolvedSelectedCaseId((caseId as bigint).toString());
+        setSelectedCaseData(caseData as Record<string, unknown>);
+      } catch {
+        // ignore
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [selectedCaseId, selectedListing, publicClient, contractReady]);
+
   const buyerEvidenceURI = selectedListing?.disputeEvidenceURI ?? "";
   const sellerEvidenceURI = typeof selectedCaseData?.sellerEvidenceURI === "string"
     ? selectedCaseData.sellerEvidenceURI : "";
@@ -116,8 +162,8 @@ export default function JuryPage() {
     address: contracts.juryDao.address,
     abi: contracts.juryDao.abi,
     functionName: "hasVoted",
-    args: selectedCaseId && address ? [BigInt(selectedCaseId), address] : undefined,
-    query: { enabled: contractReady && Boolean(selectedCaseId) && Boolean(address) },
+    args: resolvedSelectedCaseId && address ? [BigInt(resolvedSelectedCaseId), address] : undefined,
+    query: { enabled: contractReady && Boolean(resolvedSelectedCaseId) && Boolean(address) },
   });
   const alreadyVoted = (hasVotedData as boolean) ?? false;
   const deadlinePassed = voteDeadline > 0n && BigInt(Math.floor(Date.now() / 1000)) > voteDeadline;
@@ -303,7 +349,7 @@ export default function JuryPage() {
         <div className="listing-card relative overflow-hidden">
           <div className="absolute top-0 right-0 w-48 h-48 bg-[var(--color-accent)] opacity-[0.03] rounded-bl-full pointer-events-none" />
 
-          <div className="listing-header border-b border-[var(--color-border-dim)] pb-4 mb-6 flex items-center gap-2">
+          <div className="flex items-center gap-2 border-b border-[var(--color-border-dim)] pb-4 mb-6 px-5 pt-4">
             <Shield className="size-4 text-[var(--color-accent)]" />
             <h2 className="text-sm font-bold text-[var(--color-text-primary)]">Jury Action Panel</h2>
           </div>
@@ -394,7 +440,7 @@ export default function JuryPage() {
                   </div>
                 </div>
                 <Button className="w-full" disabled={actions.isPending}
-                  onClick={() => run("Cast Vote", () => actions.castVote(BigInt(selectedCaseId), voteForBuyer, reason))}>
+                  onClick={() => run("Cast Vote", () => actions.castVote(BigInt(resolvedSelectedCaseId), voteForBuyer, reason))}>
                   <Gavel className="mr-2 size-4" /> Cast Vote
                 </Button>
               </div>
@@ -410,7 +456,7 @@ export default function JuryPage() {
                   Voting period has ended. Anyone can now trigger the final verdict.
                 </p>
                 <Button variant="destructive" className="w-full" disabled={actions.isPending}
-                  onClick={() => run("Declare Verdict", () => actions.finalizeVerdict(BigInt(selectedCaseId)))}>
+                  onClick={() => run("Declare Verdict", () => actions.finalizeVerdict(BigInt(resolvedSelectedCaseId)))}>
                   Declare Verdict <Gavel className="ml-2 size-3.5" />
                 </Button>
               </div>
